@@ -1,3 +1,4 @@
+
 # Campus Vision Challenge 2024
 
 ### Solution Overview
@@ -6,7 +7,7 @@ This repository contains the solution for the **Campus Vision Challenge**, where
 
 The model was trained on a dataset containing images of various university buildings taken from different angles and lighting conditions. The model can predict one of the 10 university building names accurately.
 
-Our goal was to create a buiding classifier with low computational cost. Thus, we trained 3 different image classifications models for this challenge: YOLOv11x-cls (ultralytics), swinv2-tiny-patch4-window8-256 (huggingface/microsoft), swinv2-small-w8_3rdparty_in1k-256px (mmdet).
+Our goal was to create a buiding classifier with low computational cost. Thus, we trained 3 different image classifications models for this challenge: YOLOv11x-cls (ultralytics), swinv2-tiny-patch4-window8-256 (huggingface/microsoft), swinv2-small-w8_3rdparty_in1k-256px (mmcv).
 
 ### Problem Statement
 
@@ -85,7 +86,7 @@ for building_name in os.listdir(data_dir):
 
 ### **Part 2: Solution Approach & Challenges**
 
-We try three different models known for their high accuracy in classification tasks: YOLOv11x-cls (ultralytics), swinv2-tiny-patch4-window8-256 (huggingface/microsoft), swinv2-small-w8_3rdparty_in1k-256px (mmdet).
+We try three different models known for their high accuracy in classification tasks: YOLOv11x-cls (ultralytics), swinv2-tiny-patch4-window8-256 (huggingface/microsoft), swinv2-small-w8_3rdparty_in1k-256px (mmcv).
 
 The challenge had normalization statistics with mean and standard deviation of the dataset. It is useful when you're training from scratch by effectiely preventing large difference in pixel values causing slow convergence. But for our models, we don't use those. Or also useful when you're fine tuning on a dataset very different from pre-train dataset. We instead use mean and standard deviation of the dataset the model was pre-trained on. Our models are already pretrained on millions of images and using a new normalization statistics might cause the pre-trained models' features and weight not reusable for our model. The weights are optimized for a different normalization statistic.
 
@@ -94,7 +95,7 @@ The challenge had normalization statistics with mean and standard deviation of t
 
 To improve the generalization and robustness of the model, we applied data preprocessing techniques:
 
-Huggingface/microsft (swinv2-tiny)
+**Huggingface/microsft (swinv2-tiny)**: We normalize the images using the feature extractor's mean and std. We also apply random horizontal flips and randon resized crop for training data. Both training and validation data are resized to the the size of the images the model was pre-trained on.
 ```python
 normalize = Normalize(mean=feature_extractor.image_mean, std=feature_extractor.image_std)
 train_transforms = Compose(
@@ -129,7 +130,7 @@ def preprocess_val(example_batch):
     return example_batch
 ```
 
-For mmdet (swinv2 small):
+For **mmcv (swinv2 small)** we only have to take care of the configuration file. 
 ```python
 cfg.model.head.num_classes = 10
 cfg.data_preprocessor.num_classes = 10
@@ -152,19 +153,19 @@ cfg.val_dataloader.dataset.data_root = '/kaggle/input/buildings/dataset/val'
 cfg.val_dataloader.dataset.type = cfg.dataset_type
 del cfg.val_dataloader.dataset['split']
 ```
-We only have to take care of the configuration file. <br />
+<br />
 
-Yolov11 takes care of data-preprocessing on its own during training.
+**Yolov11x** takes care of data-preprocessing on its own during training.
 
 
 #### b. Model Selection
 
-Yolov11x
+**Yolov11x**
 ```python
 model = YOLO('yolo11x-cls.pt')
 ```
 
-swinv2_tiny (huggingface)
+**swinv2_tiny (huggingface)**
 ```python
 model_name_or_path = "microsoft/swinv2-tiny-patch4-window8-256"
 model = AutoModelForImageClassification.from_pretrained(
@@ -176,7 +177,8 @@ model = AutoModelForImageClassification.from_pretrained(
 )
 ```
 
-swinv2_small (mmdet)
+**swinv2_small (mmcv)**
+Download the model and provide the model location in the config file.
 ```python
 !wget https://download.openmmlab.com/mmclassification/v0/swin-v2/swinv2-small-w8_3rdparty_in1k-256px_20220803-b01a4332.pth -P ./checkpoints # Download the model
 cfg.load_from = './checkpoints/swinv2-small-w8_3rdparty_in1k-256px_20220803-b01a4332.pth'  # Provide the model location in the config file
@@ -188,19 +190,21 @@ The first challenge was model selection. There are countless classifications mod
 
 The second challenge was to find hardware to train the models. We used Kaggle to train our models. Kaggle gives out free GPU for 30hr/week: Tesla P100 GPU with 16GB VRAM and 30GB RAM. 
 
-I built mmdet from source because of the CUDA version mismatch with kaggle. But I think you can also directly install latest version of mmdet using mim. More instruction for running in inference section.
+I built mmcv from source because of the CUDA version mismatch with kaggle. You can't directly install mmcv if you have cuda higher than 12.1 More instruction for running in inference section.
 
 ---
 ### **Part 2: Training/Validating the Models**
 
 #### Training:
 
-Yolov11x
+**Yolov11x**
 ```python
 results = model.train(data='/kaggle/input/buildings/dataset/', epochs=45, imgsz=512, save=True, device=0, val=True, plots=True)
 ```
 
-swinv2_tiny (huggingface)
+
+**swinv2_tiny (huggingface)**
+We provide training arguments and create a trainer instance using those arguments.
 ```python
 args = TrainingArguments(
     f"{model_name}-finetuned-buildings",
@@ -231,83 +235,75 @@ trainer = Trainer(
 train_results = trainer.train()
 ```
 
-swinv2_small (mmdet)
+
+**swinv2_small (mmcv)**
+We train the model using the config file and train script
 ```python
 buildings_config=f'./configs/swin_transformer_v2/swinv2-small-w8_buildings.py'
 with open(buildings_config, 'w') as f:
     f.write(cfg.pretty_text)
 !python tools/train.py {buildings_config}
 ```
+<br />
 
-Yolov11x and swinv2_tiny were also validated each epoch while traning. swinv2_small was only validated every 5 epoch after the first 20 epochs.
-<img width="800" alt="swinv2_tiny_table" src="https://github.com/pc942/cv_challenge_apt_4201/blob/main/images/swinv2_tiny_table.png"> <br />
-<img width="800" alt="yolox_results" src="https://github.com/pc942/cv_challenge_apt_4201/blob/main/images/yolo_results.png"> <br />
-<img width="800" alt="swinv2_small" src="https://github.com/user-attachments/assets/524a72c0-ce01-423d-b3ce-bc588de364e7">
+**Yolov11x** and **swinv2_tiny** were also validated each epoch while traning. **swinv2_small** was only validated every 5 epoch after the first 20 epochs. 
 
+#### Performance Metrics (Validation):
 
-
-
-#### Performance Metrics:
-
-Here are the performance metrics of the final trained model on the validation set:
+Here are the performance metrics of the final trained model on the **validation set**:
 
 **yolox10-cls**
-- **Accuracy**: 91.5%
-- **Precision**: 0.90
-- **Recall**: 0.88
-- **F1 Score**: 0.89
+- **Accuracy**: 99.841%
+- **Precision**: 0.99842
+- **Recall**: 0.99841
+- **F1 Score**: 0.99841
 
 **swinv2-tiny (huggingface)**
-- **Accuracy**: 91.5%
-- **Precision**: 0.90
-- **Recall**: 0.88
-- **F1 Score**: 0.89
+- **Accuracy**: 99.577%
+- **Precision**: 0.99581
+- **Recall**: 0.99583
+- **F1 Score**: 0.99581
 
-**swinv2-small (mmdet)**
-- **Accuracy**: 91.5%
-- **Precision**: 0.90
-- **Recall**: 0.88
-- **F1 Score**: 0.89
-
-##### Confision Matrix:
-
-<img width="800" alt="swinv2_tiny_table" src="https://github.com/pc942/cv_challenge_apt_4201/blob/main/images/swinv2_tiny_table.png"> <br />
-<img width="800" alt="yolox_results" src="https://github.com/pc942/cv_challenge_apt_4201/blob/main/images/yolo_results.png"> <br />
-<img width="800" alt="swinv2_small" src="https://github.com/user-attachments/assets/524a72c0-ce01-423d-b3ce-bc588de364e7">
+**swinv2-small (mmcv)**
+- **Accuracy**: 99.894%
+- **Precision**: 0.99895
+- **Recall**: 0.99894
+- **F1 Score**: 0.9989
 
 ---
 
 ### **Part 3: Testing the Models**
 
 
-The models with best validation metrics were saved for inferece. We now test the best models on the test split of the dataset.
+The models with best validation metrics were saved for inference. We now test the best models on the test split of the dataset.
 
-#### Model Evaluation
+#### Model Evaluation (Testing)
 
-Here are the performance metrics of the final trained model on the test set:
+Here are the performance metrics of the final trained model on the **test set**:
 
 **yolox10-cls**
-- **Accuracy**: 91.5%
-- **Precision**: 0.90
-- **Recall**: 0.88
-- **F1 Score**: 0.89
+- **Accuracy**: 99.524%
+- **Precision**: 0.99512
+- **Recall**: 0.99536
+- **F1 Score**: 0.99521
 
 **swinv2-tiny (huggingface)**
-- **Accuracy**: 91.5%
-- **Precision**: 0.90
-- **Recall**: 0.88
-- **F1 Score**: 0.89
+- **Accuracy**: 99.577%
+- **Precision**: 0.99582
+- **Recall**: 0.99583
+- **F1 Score**: 0.99582
 
-**swinv2-small (mmdet)**
-- **Accuracy**: 91.5%
-- **Precision**: 0.90
-- **Recall**: 0.88
-- **F1 Score**: 0.89
+**swinv2-small (mmcv)**
+- **Accuracy**: 99.736%
+- **Precision**: 0.99735
+- **Recall**: 0.99742
+- **F1 Score**: 0.99737
   
-#### Confusion Matrix
-<img width="800" alt="swinv2_tiny_table" src="https://github.com/pc942/cv_challenge_apt_4201/blob/main/images/swinv2_tiny_table.png"> <br />
-<img width="800" alt="yolox_results" src="https://github.com/pc942/cv_challenge_apt_4201/blob/main/images/yolo_results.png"> <br />
-<img width="800" alt="swinv2_small" src="https://github.com/user-attachments/assets/524a72c0-ce01-423d-b3ce-bc588de364e7">
+#### Confusion Matrix:
+<img width="390" alt="yolo_confusion_matrix" src="https://raw.githubusercontent.com/pc942/cv_challenge_apt_4201/refs/heads/main/images/confusion_matrix_yolo.png"> 
+<img width="390" alt="swinv2_tiny_confusion_matrix" src="https://raw.githubusercontent.com/pc942/cv_challenge_apt_4201/refs/heads/main/images/confusion_matrix_swinv2_tiny.png"> <br />
+<img width="800" alt="yolox_results" src="https://raw.githubusercontent.com/pc942/cv_challenge_apt_4201/refs/heads/main/images/confusion_matrix_swinv2_small.png"> <br />
+
 ---
 
 ### **Part 4: Solution Files**
@@ -315,15 +311,21 @@ Here are the performance metrics of the final trained model on the test set:
 ```markdown
 ## Solution Files
 
-- **`model.py`**: Contains the implementation of the neural network architecture (ResNet18 with custom final layer).
-- **`train.py`**: Script to train the model on the dataset.
+- **`yolo_inference.py`**: Script to get prediction results/metrics using yolov11x model.
+- **`swinv2_small_inference.py`**: Script to get prediction results/metrics using swinv2_small model.
+- **`swinv2_tiny_inference.py`**: Script to get prediction results/metrics using swinv2_tiny model.
+- **`train/ultralytics_yolov11x.ipynb`**: Notebook to train yolov11x model on the dataset.
+- **`train/mmdet_swimv2_small.ipynb`**: Notebook to train swinv2_small model on the dataset.
+- **`train/huggingface_swinv2_tiny.ipynb`**: Notebook to train swinv2_tiny model on the dataset.
 - **`predict.py`**: Script to load the trained model and make predictions on new images.
-- **`dataset_preprocessing.py`**: Script to preprocess and augment the dataset.
+- **`create_dataset.ipynb`**: Notebook file to split the dataset into train/val/test split.
 - **`requirements.txt`**: List of required libraries and dependencies.
 ```
 
 
 #### Instructions to Run the Code for Inference
+
+I created a new python virtual environment for inference so we would only need to install required packages for inference. The packages mentioned in the `requirement.txt` file might not be enough for training but only for inference. If anyone runs into problem during inference or training, please contact me through my email address mentioned in the bottom section. Link to the model files: https://drive.google.com/file/d/1xoQmGaSOGLqyvIDwyI5w0cT3dOUrKWs1/view?usp=sharing
 
 1. **Clone the Repository**:
     ```bash
@@ -336,34 +338,62 @@ Here are the performance metrics of the final trained model on the test set:
     ```bash
     pip install -r requirements.txt
     ```
-
-3. **Preprocess the Dataset**:
-    Run the preprocessing script to prepare the dataset (train/validation split, augmentation):
+  **For prediction:**
+  
+3. **Make Predictions**:
+    To make predictions on new image dataset, use the following script:
+    **yolov11x:**
     ```bash
-    python dataset_preprocessing.py
+    python yolo_inference.py --image_path <path_to_image_dataset> --model_path <path_to_model>
     ```
+    Keep in mind, you can either give out an image or a dataset with **labels** (divided into subdirectories) to image_path. But when you are inferencing on a new dataset **without labels** (not divided into subdirectories). Use the following script:
+    ```bash
+    python yolo_inference.py --image_path <path_to_image_dataset> --model_path <path_to_model> --no_label
+    ```
+    <br />
+    
+   **swinv2_tiny (huggingface):**
+    Hugging face uses `config.json` and `preprocessor_config.json` along with the model file in the same directory to load model and predict. Be sure to put them in the same directory. The download link to the model already has it in the same directory.
+    ```bash
+    python swinv2_tiny_inference.py --image_path <path_to_image_dataset> --model_folder_path <path_to_model_directory>
+    ```
+    Keep in mind, you can either give out an image or a dataset with **labels** (divided into subdirectories) to `image_path`. But when you are inferencing on a new dataset **without labels** (not divided into subdirectories). Use the following script:
+    ```bash
+    python swinv2_tiny_inference.py --image_path <path_to_image_dataset> --model_folder_path <path_to_model_directory> --no_label
+    ```
+    <br />
+    
+   **swinv2_small (mmcv):**
+    MMCV uses `config.py` along with the model file in the same directory to load model and predict. Be sure to put them in the same directory. The download link to the model already has it in the same directory.
+    ```bash
+    python swinv2_small_inference.py --image_path <path_to_image_dataset> --model_folder_path <path_to_model_directory>
+    ```
+    Keep in mind, you can either give out an image or a dataset with **labels** (divided into subdirectories) to `image_path`. But when you are inferencing on a new dataset **without labels** (not divided into subdirectories). Use the following script:
+    ```bash
+    python swinv2_small_inference.py --image_path <path_to_image_dataset> --model_folder_path <path_to_model_directory> --no_label
+    ```
+ An example of running the script:
+ <img width="800" alt="yolox_results" src="https://raw.githubusercontent.com/pc942/cv_challenge_apt_4201/refs/heads/main/images/example_run.png"> <br />
+ **For training:**
+       
+   ```bash
+   jupyter lab
+   ```
+   
+3. **Preprocess the Dataset**:
+    After step 2, run the preprocessing ipynb file (`create_dataset.ipynb`) to prepare the dataset (train/validation/test split):
 
 4. **Train the Model**:
-    Run the training script to train the model on the dataset:
-    ```bash
-    python train.py
-    ```
+    Run the training ipynb files under the `training` directory. Each model has a different training ipynb file: `ultralytics_yolov11x.ipynb`, `mmdet_swimv2_small.ipynb`, `huggingface_swinv2_tiny.ipynb`.
 
-    The model will save the best weights as `best_model.pth`.
-
-5. **Make Predictions**:
-    To make predictions on new images, use the following script:
-    ```bash
-    python predict.py --image_path <path_to_image>
-    ```
 
 ---
 
 ### Conclusion
 
-This solution demonstrates the effectiveness of using pre-trained yolov11 and swinv2 models for image classification tasks, particularly in predicting the names of university buildings. The accuracy and f1-score can't improve much at this point.
+This solution demonstrates the effectiveness of using pre-trained yolov11 and swinv2 models for image classification tasks, particularly in predicting the names of university buildings. The performance metrics (accuracy, f1-score, etc.) can't improve much at this point.
 
-Future work could instead include experimenting with more advanced models such as COCA for zero shot detection. Instead of retraining the model, we use the model as feature extracter. Now that the model has learnt to extract building features very accurately, we instead tell the model what other buildings look like. COCA uses image-text encoder decoder model to perform zero-shot detection. Without giving it images of, for example, Dogwood Hall, we would instead describe what it looks like. The COCA model could then predict whether the image is Dogwood hall or some other building. 
+Future work could instead include experimenting with more advanced models such as COCA for zero shot detection. Instead of retraining the model, we use the model as feature extractor. Now that the model has learnt to extract building features very accurately, we instead tell the model what other buildings look like. COCA uses image-text encoder decoder model to perform zero-shot detection. Without giving it images of, for example, Dogwood Hall, we would instead describe what it looks like. The COCA model could then predict whether the image is Dogwood hall or some other building without even a single picture of dogwood hall. 
 
 
 ### Team Members:
