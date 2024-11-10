@@ -327,6 +327,9 @@ Here are the performance metrics of the final trained model on the **test set**:
 
 I created a new python virtual environment for inference so we would only need to install required packages for inference. The packages mentioned in the `requirement.txt` file might not be enough for training but only for inference. If anyone runs into problem during inference or training, please contact me through my email address mentioned in the bottom section. Link to the model files: https://drive.google.com/file/d/1xoQmGaSOGLqyvIDwyI5w0cT3dOUrKWs1/view?usp=sharing
 
+
+**Please consider the swinv2_small (mmcv) model for the challenge. If you have enough time, please run the tests on other models to see how well they generalize.**
+
 1. **Clone the Repository**:
     ```bash
     git clone <repo-link>
