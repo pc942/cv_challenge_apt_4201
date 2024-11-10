@@ -332,8 +332,8 @@ I created a new python virtual environment for inference so we would only need t
 
 1. **Clone the Repository**:
     ```bash
-    git clone <repo-link>
-    cd <repo-name>
+    git clone https://github.com/pc942/cv_challenge_apt_4201.git
+    cd cv_challenge_apt_4201
     ```
 
 2. **Install Dependencies**:
