@@ -349,6 +349,10 @@ I created a new python virtual environment for inference so we would only need t
     ```bash
     python yolo_inference.py --image_path <path_to_image_dataset> --model_path <path_to_model>
     ```
+    Example:
+    ```bash
+    python yolo_inference.py --image_path ./dataset/test/ --model_path ./models/yolo/best.pt
+    ```
     Keep in mind, you can either give out an image or a dataset with **labels** (divided into subdirectories) to image_path. But when you are inferencing on a new dataset **without labels** (not divided into subdirectories). Use the following script:
     ```bash
     python yolo_inference.py --image_path <path_to_image_dataset> --model_path <path_to_model> --no_label
@@ -360,6 +364,10 @@ I created a new python virtual environment for inference so we would only need t
     ```bash
     python swinv2_tiny_inference.py --image_path <path_to_image_dataset> --model_folder_path <path_to_model_directory>
     ```
+    Example:
+    ```bash
+    python swinv2_tiny_inference.py --image_path ./dataset/test --model_folder_path ./models/swinv2_tiny
+    ```
     Keep in mind, you can either give out an image or a dataset with **labels** (divided into subdirectories) to `image_path`. But when you are inferencing on a new dataset **without labels** (not divided into subdirectories). Use the following script:
     ```bash
     python swinv2_tiny_inference.py --image_path <path_to_image_dataset> --model_folder_path <path_to_model_directory> --no_label
@@ -370,6 +378,10 @@ I created a new python virtual environment for inference so we would only need t
     MMCV uses `config.py` along with the model file in the same directory to load model and predict. Be sure to put them in the same directory. The download link to the model already has it in the same directory.
     ```bash
     python swinv2_small_inference.py --image_path <path_to_image_dataset> --model_folder_path <path_to_model_directory>
+    ```
+    Example:
+     ```bash
+    python swinv2_small_inference.py --image_path ./dataset/test --model_folder_path ./models/swinv2_small
     ```
     Keep in mind, you can either give out an image or a dataset with **labels** (divided into subdirectories) to `image_path`. But when you are inferencing on a new dataset **without labels** (not divided into subdirectories). Use the following script:
     ```bash
@@ -396,7 +408,7 @@ I created a new python virtual environment for inference so we would only need t
 
 This solution demonstrates the effectiveness of using pre-trained yolov11 and swinv2 models for image classification tasks, particularly in predicting the names of university buildings. The performance metrics (accuracy, f1-score, etc.) can't improve much at this point.
 
-Future work could instead include experimenting with more advanced models such as COCA for zero shot detection. Instead of retraining the model, we use the model as feature extractor. Now that the model has learnt to extract building features very accurately, we instead tell the model what other buildings look like. COCA uses image-text encoder decoder model to perform zero-shot detection. Without giving it images of, for example, Dogwood Hall, we would instead describe what it looks like. The COCA model could then predict whether the image is Dogwood hall or some other building without even a single picture of dogwood hall. 
+Future work could instead include experimenting with more advanced models such as COCA for zero shot detection. Instead of retraining the model for new classes, we instead use the model as feature extractor. Now that the model has learnt to extract building features very accurately, we instead tell the model what other buildings look like using a written description. COCA uses image-text encoder decoder model to perform zero-shot detection. Without giving the model images of, for example, Dogwood Hall, we would instead describe what it looks like. The COCA model could then predict whether the image is Dogwood hall or some other building without even a single picture of dogwood hall. 
 
 
 ### Team Members:
