@@ -190,7 +190,7 @@ The first challenge was model selection. There are countless classifications mod
 
 The second challenge was to find hardware to train the models. We used Kaggle to train our models. Kaggle gives out free GPU for 30hr/week: Tesla P100 GPU with 16GB VRAM and 30GB RAM. 
 
-I built mmcv from source because of the CUDA version mismatch with kaggle. You can't directly install mmcv if you have cuda higher than 12.1 More instruction for running in inference section.
+I built mmcv from source because of the CUDA version mismatch with kaggle. It is not recommended to directly install mmcv from pip if you have cuda higher than 12.1, but just inference shouldn't cause much of an issure. More instruction for running in inference section.
 
 ---
 ### **Part 2: Training/Validating the Models**
